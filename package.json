@@ -2,6 +2,7 @@
     "name": "vue-blog",
     "version": "1.0.0",
     "dependencies": {
-        "express": "^4.18.2"
+        "express": "^4.18.2",
+        "node-fetch": "^2.6.7"
     }
 }

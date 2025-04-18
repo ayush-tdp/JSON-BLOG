@@ -44,10 +44,17 @@
         button:hover {
             background: #0056b3;
         }
+        .error {
+            color: red;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <div id="app">
+        <!-- Error Message -->
+        <div class="error" v-if="error">{{ error }}</div>
+
         <!-- Blog Creation Form -->
         <div class="blog-form">
             <h2>Add New Blog</h2>
@@ -88,13 +95,14 @@
                         description: '',
                         content: ''
                     },
-                    selectedBlog: null
+                    selectedBlog: null,
+                    error: null
                 };
             },
             methods: {
                 async addBlog() {
                     if (!this.newBlog.title || !this.newBlog.description || !this.newBlog.content) {
-                        alert('Please fill in all fields');
+                        this.error = 'Please fill in all fields';
                         return;
                     }
 
@@ -115,27 +123,33 @@
                         if (response.ok) {
                             this.blogs.push(blog);
                             this.newBlog = { title: '', description: '', content: '' };
+                            this.error = null;
                         } else {
-                            alert('Failed to add blog');
+                            const errorData = await response.json();
+                            this.error = errorData.error || 'Failed to add blog';
                         }
                     } catch (error) {
                         console.error('Error adding blog:', error);
-                        alert('Error adding blog');
+                        this.error = 'Error adding blog. Please try again.';
                     }
                 },
                 showBlog(blog) {
                     this.selectedBlog = blog;
+                    this.error = null;
                 },
                 async fetchBlogs() {
                     try {
                         const response = await fetch('/api/blogs');
                         if (response.ok) {
                             this.blogs = await response.json();
+                            this.error = null;
                         } else {
-                            console.error('Failed to fetch blogs');
+                            const errorData = await response.json();
+                            this.error = errorData.error || 'Failed to fetch blogs';
                         }
                     } catch (error) {
                         console.error('Error fetching blogs:', error);
+                        this.error = 'Error fetching blogs. Please try again.';
                     }
                 }
             },
