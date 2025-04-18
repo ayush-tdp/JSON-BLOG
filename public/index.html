@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Vue Blog</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .blog-form, .blog-list, .blog-detail {
+            margin-bottom: 30px;
+        }
+        .blog-form input, .blog-form textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .blog-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .blog-item:hover {
+            background-color: #f9f9f9;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Blog Creation Form -->
+        <div class="blog-form">
+            <h2>Add New Blog</h2>
+            <input v-model="newBlog.title" placeholder="Blog Title" />
+            <textarea v-model="newBlog.description" placeholder="Blog Description" rows="4"></textarea>
+            <textarea v-model="newBlog.content" placeholder="Blog Content (Code)" rows="10"></textarea>
+            <button @click="addBlog">Add Blog</button>
+        </div>
+
+        <!-- Blog List -->
+        <div class="blog-list">
+            <h2>Blog Posts</h2>
+            <div v-for="blog in blogs" :key="blog.id" class="blog-item" @click="showBlog(blog)">
+                <h3>{{ blog.title }}</h3>
+                <p>{{ blog.description }}</p>
+            </div>
+        </div>
+
+        <!-- Blog Detail -->
+        <div class="blog-detail" v-if="selectedBlog">
+            <h2>{{ selectedBlog.title }}</h2>
+            <p>{{ selectedBlog.description }}</p>
+            <pre><code>{{ selectedBlog.content }}</code></pre>
+            <button @click="selectedBlog = null">Back to List</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    blogs: [],
+                    newBlog: {
+                        title: '',
+                        description: '',
+                        content: ''
+                    },
+                    selectedBlog: null
+                };
+            },
+            methods: {
+                async addBlog() {
+                    if (!this.newBlog.title || !this.newBlog.description || !this.newBlog.content) {
+                        alert('Please fill in all fields');
+                        return;
+                    }
+
+                    const blog = {
+                        id: Date.now(),
+                        title: this.newBlog.title,
+                        description: this.newBlog.description,
+                        content: this.newBlog.content,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    try {
+                        const response = await fetch('/api/blogs', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(blog)
+                        });
+                        if (response.ok) {
+                            this.blogs.push(blog);
+                            this.newBlog = { title: '', description: '', content: '' };
+                        } else {
+                            alert('Failed to add blog');
+                        }
+                    } catch (error) {
+                        console.error('Error adding blog:', error);
+                        alert('Error adding blog');
+                    }
+                },
+                showBlog(blog) {
+                    this.selectedBlog = blog;
+                },
+                async fetchBlogs() {
+                    try {
+                        const response = await fetch('/api/blogs');
+                        if (response.ok) {
+                            this.blogs = await response.json();
+                        } else {
+                            console.error('Failed to fetch blogs');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching blogs:', error);
+                    }
+                }
+            },
+            mounted() {
+                this.fetchBlogs();
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
